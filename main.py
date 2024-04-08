@@ -42,11 +42,20 @@ class rna_encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(10000, 1000),
+            nn.Linear(10000, 256),
             nn.ReLU(),
-            nn.Linear(1000, 100),
+            nn.BatchNorm1d(),
+            nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(100, 10)
+            nn.BatchNorm1d(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.BatchNorm1d(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.BatchNorm1d(),
+            nn.Linear(32, 16),
+            nn.ReLU()
         )
     
     def forward(self, x):
@@ -57,11 +66,20 @@ class rna_decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(10, 100),
+            nn.Linear(16, 32),
             nn.ReLU(),
-            nn.Linear(100, 1000),
+            nn.BatchNorm1d(),
+            nn.Linear(32, 64),
             nn.ReLU(),
-            nn.Linear(1000, 10000)
+            nn.BatchNorm1d(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.BatchNorm1d(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.BatchNorm1d(),
+            nn.Linear(256, 10000),
+            nn.ReLU()
         )
     
     def forward(self, x):
@@ -72,9 +90,11 @@ class adt_encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(25, 15),
+            nn.Linear(25, 20),
             nn.ReLU(),
-            nn.Linear(15, 10)
+            nn.BatchNorm1d(),
+            nn.Linear(20, 16),
+            nn.ReLU()
         )
     
     def forward(self, x):
@@ -85,22 +105,26 @@ class adt_decoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(10, 15),
+            nn.Linear(16, 20),
             nn.ReLU(),
-            nn.Linear(15, 25)
+            nn.BatchNorm1d(),
+            nn.Linear(20, 25),
+            nn.ReLU()
         )
     
     def forward(self, x):
         logits = self.stack(x)
         return logits
 
-class the_middle_part(nn.Module):
+class variational_auto_encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            nn.Linear(10, 15),
+            nn.Linear(16, 10),
             nn.ReLU(),
-            nn.Linear(15, 25)
+            nn.BatchNorm1d(),
+            nn.Linear(10, 16),
+            nn.ReLU()
         )
     
     def forward(self, x):
@@ -111,12 +135,14 @@ rna_enc = rna_encoder().to(device)
 rna_dec = rna_decoder().to(device)
 adt_enc = adt_encoder().to(device)
 adt_dec = adt_decoder().to(device)
+vac = variational_auto_encoder().to(device)
 
 loss_fn = nn.MSELoss()
 rna_enc_optim = optim.Adam(rna_enc.parameters(), lr = 0.001)
 rna_dec_optim = optim.Adam(rna_dec.parameters(), lr = 0.001)
 adt_enc_optim = optim.Adam(adt_enc.parameters(), lr = 0.001)
 adt_dec_optim = optim.Adam(adt_dec.parameters(), lr = 0.001)
+vac_optim = optim.Adam(vac.parameters(), lr=0.001)
 
 def train(dataloader, enc, dec, loss_fn, enc_optimizer, dec_optimizer):
     size = len(dataloader.dataset)
