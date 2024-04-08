@@ -7,6 +7,33 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 import torch.optim as optim
 
+train_adt = np.genfromtxt("train_ADT.csv", delimiter=",", dtype=float, skip_header=1)
+train_rna = np.genfromtxt("train_RNA.csv", delimiter=",", dtype=float, skip_header=1)
+
+train_adt = train_adt.T
+train_rna = train_rna.T
+
+train_adt = np.log1p(train_adt)
+train_rna = np.log1p(train_rna)
+
+train_adt = torch.from_numpy(train_adt)
+train_rna = torch.from_numpy(train_rna)
+
+train_adt = train_adt.to(torch.float32)
+train_rna = train_rna.to(torch.float32)
+
+train_rna = train_rna.to_sparse()
+
+adt_ds = TensorDataset(train_adt)
+rna_ds = TensorDataset(train_rna)
+
+adt_dl = DataLoader(adt_ds, batch_size=64)
+rna_dl = DataLoader(rna_ds, batch_size=64)
+
+print("Created dataloaders with no issues")
+print(adt_dl)
+print(rna_dl)
+
 torch.manual_seed(12345)
 
 device = "cpu"
@@ -55,6 +82,19 @@ class adt_encoder(nn.Module):
         return logits
 
 class adt_decoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.stack = nn.Sequential(
+            nn.Linear(10, 15),
+            nn.ReLU(),
+            nn.Linear(15, 25)
+        )
+    
+    def forward(self, x):
+        logits = self.stack(x)
+        return logits
+
+class the_middle_part(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
