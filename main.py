@@ -184,8 +184,6 @@ def train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_
         adt_enc_optimizer.step()
         adt_enc_optimizer.zero_grad()
 
-        print("Epoch " + str(num) + " done!")
-
 def test(dataloader, rna_enc, adt_dec, vac):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
@@ -205,6 +203,7 @@ def test(dataloader, rna_enc, adt_dec, vac):
 epochs = 10
 for t in range(epochs):
     train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_enc_optim, rna_dec_optim, adt_enc_optim, adt_dec_optim, vac_optim)
+    print("Epoch " + str(t) + " done!")
 
 with torch.no_grad():
     pred = rna_enc(test_rna)
