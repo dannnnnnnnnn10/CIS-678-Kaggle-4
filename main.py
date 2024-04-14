@@ -55,8 +55,7 @@ class rna_encoder(nn.Module):
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.BatchNorm1d(32),
-            nn.Linear(32, 16),
-            nn.ReLU()
+            nn.Linear(32, 16)
         )
     
     def forward(self, x):
@@ -79,8 +78,7 @@ class rna_decoder(nn.Module):
             nn.Linear(128, 256),
             nn.ReLU(),
             nn.BatchNorm1d(256),
-            nn.Linear(256, 10000),
-            nn.ReLU()
+            nn.Linear(256, 10000)
         )
     
     def forward(self, x):
@@ -94,8 +92,7 @@ class adt_encoder(nn.Module):
             nn.Linear(25, 20),
             nn.ReLU(),
             nn.BatchNorm1d(20),
-            nn.Linear(20, 16),
-            nn.ReLU()
+            nn.Linear(20, 16)
         )
     
     def forward(self, x):
@@ -109,8 +106,7 @@ class adt_decoder(nn.Module):
             nn.Linear(16, 20),
             nn.ReLU(),
             nn.BatchNorm1d(20),
-            nn.Linear(20, 25),
-            nn.ReLU()
+            nn.Linear(20, 25)
         )
     
     def forward(self, x):
@@ -124,8 +120,7 @@ class variational_auto_encoder(nn.Module):
             nn.Linear(16, 10),
             nn.ReLU(),
             nn.BatchNorm1d(10),
-            nn.Linear(10, 16),
-            nn.ReLU()
+            nn.Linear(10, 16)
         )
     
     def forward(self, x):
@@ -139,11 +134,11 @@ adt_dec = adt_decoder().to(device)
 vac = variational_auto_encoder().to(device)
 
 loss_fn = nn.MSELoss()
-rna_enc_optim = optim.Adam(rna_enc.parameters(), lr = 0.001)
-rna_dec_optim = optim.Adam(rna_dec.parameters(), lr = 0.001)
+rna_enc_optim = optim.Adam(rna_enc.parameters(), lr = 0.01)
+rna_dec_optim = optim.Adam(rna_dec.parameters(), lr = 0.01)
 adt_enc_optim = optim.Adam(adt_enc.parameters(), lr = 0.001)
 adt_dec_optim = optim.Adam(adt_dec.parameters(), lr = 0.001)
-vac_optim = optim.Adam(vac.parameters(), lr=0.001)
+vac_optim = optim.Adam(vac.parameters(), lr=0.01)
 
 def train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_enc_optimizer, rna_dec_optimizer, adt_enc_optimizer, adt_dec_optimizer, vac_optimizer):
 
@@ -156,11 +151,11 @@ def train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_
     for item1, item2 in zip(enumerate(rna_dl), enumerate(adt_dl)):
         batch1, X1 = item1
         batch2, X2 = item2
-        pred = rna_enc(X1)
+        pred = rna_enc(X1[0])
         pred = vac(pred)
         pred = rna_dec(pred)
 
-        loss = loss_fn(pred, X1)
+        loss = loss_fn(pred, X1[0])
 
         loss.backward()
         rna_dec_optimizer.step()
@@ -170,11 +165,11 @@ def train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_
         rna_enc_optimizer.step()
         rna_enc_optimizer.zero_grad()
 
-        pred = adt_enc(X2)
+        pred = adt_enc(X2[0])
         pred = vac(pred)
         pred = adt_dec(pred)
 
-        loss = loss_fn(pred, X2)
+        loss = loss_fn(pred, X2[0])
 
         loss.backward()
         adt_dec_optimizer.step()
@@ -200,10 +195,10 @@ def test(dataloader, rna_enc, adt_dec, vac):
     # print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     print(str(100*correct))
 
-epochs = 10
+epochs = 100
 for t in range(epochs):
     train(rna_dl, adt_dl, rna_enc, rna_dec, adt_enc, adt_dec, vac, loss_fn, rna_enc_optim, rna_dec_optim, adt_enc_optim, adt_dec_optim, vac_optim)
-    print("Epoch " + str(t) + " done!")
+    print("Epoch " + str(t+1) + " done!")
 
 with torch.no_grad():
     pred = rna_enc(test_rna)
@@ -217,4 +212,4 @@ with open("output.csv", 'w', newline='') as csvfile:
     outputwriter = csv.writer(csvfile, quotechar='"', delimiter=",")
     outputwriter.writerow(['Id'] + ['Expected'])
     for n in range(results.size):
-        outputwriter.writerow(['ID_' + str(int(n+1))] + [str(float(results[n][0]))])
+        outputwriter.writerow(['id' + str(int(n+1))] + [str(float(results[n][0]))])
